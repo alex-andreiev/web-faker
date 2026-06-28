@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Faker</title>
+    <link rel="stylesheet" type="text/css" href="popup.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Web Faker</h1>
+    </div>
+    <div class="toggle-container">
+        <div>
+            <div id="toggleLabel" class="toggle-label">Disabled</div>
+            <label class="switch">
+                <input type="checkbox" id="toggleExtension">
+                <span class="slider round"></span>
+            </label>
+        </div>
+        <div class="icon-container">
+            <button id="settingsIcon" class="settings-icon">&#9881;</button>
+            <button id="helpIcon" class="help-icon">&#128712;</button>
+        </div>
+    </div>
+    <div id="settings" class="settings" style="display:none;">
+        <div class="tabs">
+            <button class="tab-button" data-tab="mappingsTab">Mappings</button>
+            <button class="tab-button" data-tab="controlsTab">Controls</button>
+            <button class="tab-button" data-tab="websitesTab">Websites</button>
+        </div>
+        <div id="mappingsTab" class="tab-content">
+            <h2>Key-Dictionary Mappings</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Dictionary</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="settingsTableBody">
+                    <!-- Rows will be populated by JavaScript -->
+                </tbody>
+            </table>
+            <div class="buttons">
+                <button id="addMapping">+</button>
+                <button id="resetSettings">Reset</button>
+                <button id="saveMappings">Save</button>
+            </div>
+        </div>
+        <div id="controlsTab" class="tab-content" style="display:none;">
+            <h2>Controls</h2>
+            <div class="command-char-container">
+                <label for="commandChar">Command Char:</label>
+                <input type="text" id="commandChar" maxlength="1" value="/" style="width: 100px; text-align: right;">
+                <label class="switch settings-toggle">
+                    <input type="checkbox" id="toggleCommandChar">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="command-key-container">
+                <label for="commandKey">Command Key:</label>
+                <input type="text" id="commandKey" value="Control" style="width: 100px; text-align: right;" title="Recommended keys: AltLeft, AltRight, ControlLeft, ControlRight, ShiftLeft, ShiftRight">
+                <label class="switch settings-toggle">
+                    <input type="checkbox" id="toggleCommandKey">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="double-key-container">
+                <label for="toggleDoubleKey">Double Key:</label>
+                <label class="switch settings-toggle">
+                    <input type="checkbox" id="toggleDoubleKey">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        <div id="websitesTab" class="tab-content" style="display:none;">
+            <h2>Manage Websites</h2>
+            <div class="website-toggle-container">
+                <label for="toggleWebsites">Enable only for listed websites:</label>
+                <label class="switch">
+                    <input type="checkbox" id="toggleWebsites">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="website-container">
+                <input type="text" id="websiteInput" placeholder="Enter website URL" style="width: 200px;">
+                <button id="addWebsite">Add</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Website</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="websiteTableBody">
+                    <!-- Rows will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="reference" class="reference">
+        <h2>Current Mappings</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Key</th>
+                    <th>Dictionary</th>
+                </tr>
+            </thead>
+            <tbody id="referenceTableBody">
+                <!-- Rows will be populated by JavaScript -->
+            </tbody>
+        </table>
+        <div id="referenceSettings">
+            <!-- Settings will be populated by JavaScript -->
+        </div>
+    </div>
+    <div id="help" class="help" style="display:none;">
+        <h2>Help</h2>
+        <p>Here you can find information on how to use the Lorem Input extension.</p>
+        <ul>
+            <li>Toggle the extension on or off using the switch at the top.</li>
+            <li>Configure key-dictionary mappings in the settings section.</li>
+            <li>Use the command character or key to trigger text replacements.</li>
+        </ul>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

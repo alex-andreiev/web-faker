@@ -1,0 +1,322 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 10px;
+    width: 300px;
+    height: 400px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+h1 {
+    font-size: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label, button {
+    margin-bottom: 10px;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.toggle-label {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    height: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.slider.round {
+    border-radius: 20px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.icon-container {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.settings-icon, .help-icon {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    margin-top: auto;
+}
+
+.help-icon {
+  width: 27px;
+  height: 27px;
+  font-size: 16px;
+}
+
+.settings, .mappings {
+    display: none;
+}
+
+.settings.active, .mappings.active {
+    display: block;
+}
+
+.help {
+    display: none;
+}
+
+.help.active {
+    display: block;
+}
+
+.help h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.help p {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.help ul {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+.help ul li {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+#settings table, #mappings table {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#settings table th, #settings table td, #mappings table th, #mappings table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+#settings table th, #mappings table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+#settings table tr:hover, #mappings table tr:hover {
+    background-color: #f5f5f5;
+}
+
+#settings table tr:last-child td {
+    border-bottom: none;
+}
+
+#reference table {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#reference table th, #reference table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+#reference table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+#reference table tr:hover {
+    background-color: #f5f5f5;
+}
+
+#reference table tr:last-child td {
+    border-bottom: none;
+}
+
+#settings div {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#settings label {
+    margin-right: 5px;
+}
+
+.delete-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #ddd;
+}
+
+.delete-button:hover {
+    color: #ccc;
+}
+
+#settingsTableBody input[type="text"] {
+    width: 50px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+#settingsTableBody select {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.command-char-container input[type="text"], .command-key-container input[type="text"] {
+    width: 100px;
+    text-align: right;
+}
+
+.buttons {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.buttons button {
+    padding: 5px 10px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 3px;
+    background-color: #2196F3;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.buttons button:hover {
+    background-color: #1976D2;
+}
+
+#addMapping {
+    background-color: #ccc;
+}
+
+#addMapping:hover {
+    background-color: #ccc;
+}
+
+#saveMappings, #resetSettings {
+    margin-left: 10px;
+}
+
+#referenceSettings {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+#referenceSettings div {
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #333;
+}
+
+.command-char-container, .command-key-container, .double-key-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.command-char-container label, .command-key-container label, .double-key-container label {
+    margin-right: 5px;
+}
+
+.settings-toggle {
+    height: 15px;
+}
+
+.settings-toggle .slider {
+    height: 15px;
+    width: 30px;
+}
+
+.settings-toggle .slider:before {
+    height: 11px;
+    width: 11px;
+    bottom: 2px;
+    
+}
+
+.settings-toggle input:checked + .slider:before {
+    transform: translateX(15px);
+}

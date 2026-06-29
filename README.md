@@ -8,9 +8,10 @@ Use Web Faker when testing registration forms, checkout flows, admin panels, CMS
 
 ## Features
 
-- Fill active text inputs and textareas with names, emails, text snippets, descriptions, chat messages, movie titles, movie descriptions, or a random Wikipedia summary.
+- Fill active text inputs and textareas with names, emails, text snippets, Lorem Ipsum, descriptions, chat messages, movie titles, movie descriptions, or a random Wikipedia summary.
 - Trigger replacements by command character, command key, or double key press.
 - Configure key-to-dictionary mappings from the popup.
+- Generate classic Lorem Ipsum as words, sentences, or paragraphs, with an option to start with `Lorem ipsum dolor sit amet`.
 - Configure generated text length range per dictionary. The extension prefers text inside the range and trims by sentence first, then by word when possible.
 - Configure Double Key timing globally so normal typing is less likely to trigger replacements.
 - Restrict the extension to a configured website list.
@@ -37,12 +38,14 @@ Default mappings:
 | `n` | `names` |
 | `e` | `emails` |
 | `t` | `texts` |
+| `l` | `Lorem Ipsum` |
 
 With the default command character `/`, type a command into an input or textarea:
 
 - `/n` inserts a random name.
 - `/e` inserts a random email.
 - `/t` inserts a random text snippet.
+- `/l` inserts configured Lorem Ipsum output.
 
 To use Wikipedia, add or keep a mapping such as `w -> wikipedia`, then type `/w`.
 
@@ -53,6 +56,7 @@ To use linked movie data, map one key to `movie_titles` and another to `movie_de
 Open the extension popup and use:
 
 - `Mappings`: configure command keys and dictionaries.
+- `Lorem`: configure Lorem Ipsum output type, count, and whether it starts with the classic phrase.
 - `Controls`: configure command character, command key, Double Key mode, Double Key delay, and per-dictionary min/max character counts.
 - `Websites`: optionally enable the extension only on listed hostnames.
 
@@ -81,9 +85,9 @@ Use it when testing registration forms, checkout flows, admin panels, CMS screen
 
 Main features:
 - Fill active text inputs and textareas with random placeholder data
-- Generate names, emails, text snippets, descriptions, chat messages, movie titles, and movie descriptions
+- Generate names, emails, text snippets, Lorem Ipsum, descriptions, chat messages, movie titles, and movie descriptions
 - Generate Wikipedia summaries only when you use the Wikipedia command
-- Configure shortcut keys and per-dictionary text length ranges
+- Configure shortcut keys, Lorem Ipsum output, and per-dictionary text length ranges
 - Restrict the extension to selected websites
 - Lightweight and private: no analytics, tracking, or form data collection
 
@@ -136,10 +140,12 @@ A static landing page is available in `docs/index.html`. In GitHub repository se
 1. Load or reload the unpacked extension.
 2. Open a page with an input or textarea.
 3. Type `/t`; it should fill immediately from local data.
-4. Type `/w`; only this command should call Wikipedia.
-5. To verify network behavior, inspect the extension service worker from `chrome://extensions/`, open the `Network` tab, and filter by `wikipedia`.
-6. Set dictionary `Min` and `Max` values like `80` and `120`, save settings, and confirm only that dictionary uses that range.
-7. Enable `Double Key`, set `Double key delay` to a short value like `200`, and confirm normal words such as `http` do not trigger unless the repeated key is pressed within that interval.
+4. Type `/l`; it should insert Lorem Ipsum using the configured unit and count.
+5. Change the Lorem settings to `sentences` and `3`, save, then confirm `/l` inserts three sentences.
+6. Type `/w`; only this command should call Wikipedia.
+7. To verify network behavior, inspect the extension service worker from `chrome://extensions/`, open the `Network` tab, and filter by `wikipedia`.
+8. Set dictionary `Min` and `Max` values like `80` and `120`, save settings, and confirm only that dictionary uses that range.
+9. Enable `Double Key`, set `Double key delay` to a short value like `200`, and confirm normal words such as `http` do not trigger unless the repeated key is pressed within that interval.
 
 ## Project Structure
 

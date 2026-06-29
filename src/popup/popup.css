@@ -38,6 +38,13 @@ button, input, select {
     font: inherit;
 }
 
+.settings-hint {
+    margin: 0 0 10px;
+    color: #486581;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
 button {
     border: 0;
     border-radius: 6px;
@@ -164,7 +171,7 @@ input:checked + .slider:before {
 
 .tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 6px;
     margin-bottom: 12px;
 }
@@ -260,6 +267,7 @@ select:focus {
 .double-key-container,
 .double-key-delay-container,
 .length-container,
+.lorem-option-container,
 .website-toggle-container,
 .website-container {
     display: grid;
@@ -273,14 +281,17 @@ select:focus {
 .command-key-container input,
 .double-key-delay-container input,
 .length-container input,
-.length-container select {
+.length-container select,
+.lorem-option-container input,
+.lorem-option-container select {
     width: 128px;
 }
 
 .command-char-container input,
 .command-key-container input,
 .double-key-delay-container input,
-.length-container input {
+.length-container input,
+.lorem-option-container input {
     text-align: right;
 }
 

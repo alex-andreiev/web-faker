@@ -5,10 +5,21 @@ let lastMovieTarget = null;
 let lastMovieOutputType = null;
 let lastMovieTime = 0;
 const MOVIE_LINK_TTL_MS = 60 * 1000;
+const LOREM_WORDS = [
+    'lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit',
+    'sed', 'do', 'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore',
+    'magna', 'aliqua', 'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud',
+    'exercitation', 'ullamco', 'laboris', 'nisi', 'aliquip', 'ex', 'ea', 'commodo',
+    'consequat', 'duis', 'aute', 'irure', 'in', 'reprehenderit', 'voluptate',
+    'velit', 'esse', 'cillum', 'fugiat', 'nulla', 'pariatur', 'excepteur', 'sint',
+    'occaecat', 'cupidatat', 'non', 'proident', 'sunt', 'culpa', 'qui', 'officia',
+    'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum'
+];
+const LOREM_START_WORDS = ['lorem', 'ipsum', 'dolor', 'sit', 'amet'];
 
 document.addEventListener('keydown', async function (event) {
     const result = await new Promise((resolve) => {
-        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'commandKey', 'useCommandChar', 'useCommandKey', 'useDoubleKey', 'doubleKeyDelayMs', 'websites', 'useWebsites', 'dictionarySettings', 'maxFakerChars', 'lengthMode'], resolve);
+        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'commandKey', 'useCommandChar', 'useCommandKey', 'useDoubleKey', 'doubleKeyDelayMs', 'websites', 'useWebsites', 'dictionarySettings', 'loremIpsumSettings', 'maxFakerChars', 'lengthMode'], resolve);
     });
     const enabled = result.enabled;
     const mappings = result.mappings || {};
@@ -55,7 +66,7 @@ document.addEventListener('keydown', async function (event) {
 
 document.addEventListener('input', async function (event) {
     const result = await new Promise((resolve) => {
-        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'useCommandChar', 'websites', 'useWebsites', 'dictionarySettings', 'maxFakerChars', 'lengthMode'], resolve);
+        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'useCommandChar', 'websites', 'useWebsites', 'dictionarySettings', 'loremIpsumSettings', 'maxFakerChars', 'lengthMode'], resolve);
     });
     const enabled = result.enabled;
     const mappings = result.mappings || {};
@@ -83,6 +94,9 @@ async function getRandomItem(type, options = {}, target = null) {
     const { fetchData, fetchWikipediaData, fetchMovieData } = await import(chrome.runtime.getURL('src/data/index.js'));
     if (type === 'movie_titles' || type === 'movie_descriptions') {
         return getMovieItem(type, await fetchMovieData(), options, target);
+    }
+    if (type === 'lorem_ipsum') {
+        return generateLoremIpsum(options.loremIpsumSettings);
     }
 
     const items = type === 'wikipedia'
@@ -181,3 +195,68 @@ function trimToWordBoundary(value, maxLength) {
     return wordBoundaryIndex > 0 ? trimmed.slice(0, wordBoundaryIndex).trimEnd() : trimmed;
 }
 
+
+function getLoremIpsumSettings(settings = {}) {
+    const unit = ['words', 'sentences', 'paragraphs'].includes(settings.unit)
+        ? settings.unit
+        : 'paragraphs';
+    const limits = {
+        words: { defaultCount: 24, min: 1, max: 200 },
+        sentences: { defaultCount: 3, min: 1, max: 50 },
+        paragraphs: { defaultCount: 2, min: 1, max: 20 }
+    }[unit];
+    const count = Math.min(limits.max, Math.max(limits.min, parseInt(settings.count, 10) || limits.defaultCount));
+
+    return {
+        unit,
+        count,
+        startWithLorem: settings.startWithLorem !== false
+    };
+}
+
+function generateLoremIpsum(settings = {}) {
+    const normalized = getLoremIpsumSettings(settings);
+    if (normalized.unit === 'words') {
+        return generateLoremWords(normalized.count, normalized.startWithLorem).join(' ');
+    }
+    if (normalized.unit === 'sentences') {
+        return generateLoremSentences(normalized.count, normalized.startWithLorem).join(' ');
+    }
+
+    return generateLoremParagraphs(normalized.count, normalized.startWithLorem).join('\n\n');
+}
+
+function generateLoremParagraphs(count, startWithLorem) {
+    return Array.from({ length: count }, (_, index) => {
+        const sentenceCount = randomInt(3, 6);
+        return generateLoremSentences(sentenceCount, startWithLorem && index === 0).join(' ');
+    });
+}
+
+function generateLoremSentences(count, startWithLorem) {
+    return Array.from({ length: count }, (_, index) => {
+        const wordCount = randomInt(8, 16);
+        return formatSentence(generateLoremWords(wordCount, startWithLorem && index === 0));
+    });
+}
+
+function generateLoremWords(count, startWithLorem) {
+    const words = [];
+    if (startWithLorem) {
+        words.push(...LOREM_START_WORDS.slice(0, Math.min(count, LOREM_START_WORDS.length)));
+    }
+    while (words.length < count) {
+        words.push(LOREM_WORDS[Math.floor(Math.random() * LOREM_WORDS.length)]);
+    }
+
+    return words;
+}
+
+function formatSentence(words) {
+    const sentence = words.join(' ');
+    return sentence.charAt(0).toUpperCase() + sentence.slice(1) + '.';
+}
+
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}

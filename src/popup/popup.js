@@ -13,12 +13,15 @@ document.addEventListener('DOMContentLoaded', async function () {
         'websites',
         'useWebsites',
         'dictionarySettings',
+        'loremIpsumSettings',
         'maxFakerChars',
         'lengthMode'
     ], function (result) {
         const defaultMappings = getDefaultMappings();
-        const mappings = result.mappings || defaultMappings;
+        const mappingState = normalizeMappings(result.mappings, defaultMappings);
+        const mappings = mappingState.mappings;
         const dictionarySettings = normalizeDictionarySettings(result.dictionarySettings, result);
+        const loremIpsumSettings = normalizeLoremIpsumSettings(result.loremIpsumSettings);
 
         if (result.enabled === undefined) {
             chrome.storage.sync.set({ enabled: true });
@@ -26,11 +29,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         document.getElementById('toggleExtension').checked = result.enabled !== false;
         updateToggleLabel(result.enabled !== false);
 
-        if (result.mappings === undefined) {
-            chrome.storage.sync.set({ mappings: defaultMappings });
+        if (result.mappings === undefined || mappingState.changed) {
+            chrome.storage.sync.set({ mappings: mappings });
         }
         populateSettingsTable(mappings);
-        populateReferenceTable(mappings, dictionarySettings);
+        populateReferenceTable(mappings, dictionarySettings, loremIpsumSettings);
 
         if (result.commandChar === undefined) {
             chrome.storage.sync.set({ commandChar: '/' });
@@ -76,7 +79,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (result.dictionarySettings === undefined) {
             chrome.storage.sync.set({ dictionarySettings: dictionarySettings });
         }
+        if (result.loremIpsumSettings === undefined) {
+            chrome.storage.sync.set({ loremIpsumSettings: loremIpsumSettings });
+        }
         populateDictionarySettingsTable(dictionarySettings);
+        populateLoremIpsumSettings(loremIpsumSettings);
         populateDictionarySelect();
     });
 
@@ -151,7 +158,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('saveMappings').addEventListener('click', function () {
         saveAllSettings(function (mappings, dictionarySettings) {
             populateSettingsTable(mappings);
-            populateReferenceTable(mappings, dictionarySettings);
+            populateReferenceTable(mappings, dictionarySettings, collectLoremIpsumSettings());
             document.getElementById('settings').classList.remove('active');
             document.getElementById('settings').style.display = 'none';
             document.getElementById('reference').classList.add('active');
@@ -160,14 +167,22 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
 
     document.getElementById('saveControls').addEventListener('click', function () {
-        saveAllSettings(function (mappings, dictionarySettings) {
-            populateReferenceTable(mappings, dictionarySettings);
+        saveAllSettings(function (mappings, dictionarySettings, loremIpsumSettings) {
+            populateReferenceTable(mappings, dictionarySettings, loremIpsumSettings);
+        });
+    });
+
+    document.getElementById('saveLoremIpsum').addEventListener('click', function () {
+        saveAllSettings(function (mappings, dictionarySettings, loremIpsumSettings) {
+            populateLoremIpsumSettings(loremIpsumSettings);
+            populateReferenceTable(mappings, dictionarySettings, loremIpsumSettings);
         });
     });
 
     document.getElementById('resetSettings').addEventListener('click', function () {
         const defaultMappings = getDefaultMappings();
         const dictionarySettings = normalizeDictionarySettings();
+        const loremIpsumSettings = getDefaultLoremIpsumSettings();
         chrome.storage.sync.set({
             enabled: true,
             mappings: defaultMappings,
@@ -180,6 +195,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             websites: [],
             useWebsites: false,
             dictionarySettings: dictionarySettings,
+            loremIpsumSettings: loremIpsumSettings,
             maxFakerChars: 0,
             lengthMode: 'fit'
         }, function () {
@@ -194,7 +210,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             document.getElementById('toggleWebsites').checked = false;
             populateSettingsTable(defaultMappings);
             populateDictionarySettingsTable(dictionarySettings);
-            populateReferenceTable(defaultMappings, dictionarySettings);
+            populateLoremIpsumSettings(loremIpsumSettings);
+            populateReferenceTable(defaultMappings, dictionarySettings, loremIpsumSettings);
             populateWebsiteTable([]);
         });
     });
@@ -223,8 +240,56 @@ document.addEventListener('DOMContentLoaded', async function () {
         }, {});
     }
 
+    function normalizeMappings(storedMappings, defaultMappings) {
+        if (!storedMappings) {
+            return { mappings: defaultMappings, changed: true };
+        }
+
+        const mappings = { ...storedMappings };
+        let changed = false;
+        for (const [key, dictionary] of Object.entries(defaultMappings)) {
+            const hasDictionary = Object.values(mappings).includes(dictionary);
+            if (!hasDictionary && mappings[key] === undefined) {
+                mappings[key] = dictionary;
+                changed = true;
+            }
+        }
+
+        return { mappings, changed };
+    }
+
+    function getDictionaryLabel(dictionaryName) {
+        const dictionary = DICTIONARIES.find(dict => dict.name === dictionaryName);
+        return dictionary && dictionary.label ? dictionary.label : dictionaryName;
+    }
+
+    function getDefaultLoremIpsumSettings() {
+        return {
+            unit: 'paragraphs',
+            count: 2,
+            startWithLorem: true
+        };
+    }
+
+    function normalizeLoremIpsumSettings(settings = {}) {
+        const unitLimits = {
+            words: { defaultCount: 24, min: 1, max: 200 },
+            sentences: { defaultCount: 3, min: 1, max: 50 },
+            paragraphs: { defaultCount: 2, min: 1, max: 20 }
+        };
+        const unit = unitLimits[settings.unit] ? settings.unit : 'paragraphs';
+        const limits = unitLimits[unit];
+        const count = Math.min(limits.max, Math.max(limits.min, parseInt(settings.count, 10) || limits.defaultCount));
+
+        return {
+            unit: unit,
+            count: count,
+            startWithLorem: settings.startWithLorem !== false
+        };
+    }
+
     function normalizeDictionarySettings(settings = {}, fallback = {}) {
-        return DICTIONARIES.reduce((acc, dict) => {
+        return DICTIONARIES.filter(dict => !dict.generated).reduce((acc, dict) => {
             const current = settings[dict.name] || {};
             const minChars = Math.max(0, parseInt(current.minChars ?? 0, 10) || 0);
             const maxChars = Math.max(0, parseInt(current.maxChars ?? fallback.maxFakerChars ?? 0, 10) || 0);
@@ -248,6 +313,14 @@ document.addEventListener('DOMContentLoaded', async function () {
         return mappings;
     }
 
+    function collectLoremIpsumSettings() {
+        return normalizeLoremIpsumSettings({
+            unit: document.getElementById('loremUnit').value,
+            count: document.getElementById('loremCount').value,
+            startWithLorem: document.getElementById('toggleLoremStart').checked
+        });
+    }
+
     function collectDictionarySettings() {
         const rows = document.getElementById('dictionarySettingsTableBody').getElementsByTagName('tr');
         const settings = {};
@@ -269,6 +342,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         const useCommandKey = document.getElementById('toggleCommandKey').checked;
         const useDoubleKey = document.getElementById('toggleDoubleKey').checked;
         const doubleKeyDelayMs = Math.min(1000, Math.max(50, parseInt(document.getElementById('doubleKeyDelayMs').value, 10) || 250));
+        const loremIpsumSettings = collectLoremIpsumSettings();
         chrome.storage.sync.set({
             mappings: mappings,
             commandChar: commandChar,
@@ -278,10 +352,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             useDoubleKey: useDoubleKey,
             doubleKeyDelayMs: doubleKeyDelayMs,
             dictionarySettings: dictionarySettings,
+            loremIpsumSettings: loremIpsumSettings,
             maxFakerChars: 0,
             lengthMode: 'fit'
         }, function () {
-            callback(mappings, dictionarySettings);
+            callback(mappings, dictionarySettings, loremIpsumSettings);
         });
     }
 
@@ -298,7 +373,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         DICTIONARIES.forEach(dict => {
             const option = document.createElement('option');
             option.value = dict.name;
-            option.textContent = dict.name;
+            option.textContent = dict.label || dict.name;
             if (dict.name === dictionary) {
                 option.selected = true;
             }
@@ -337,13 +412,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     function populateDictionarySettingsTable(settings) {
         const tableBody = document.getElementById('dictionarySettingsTableBody');
         tableBody.innerHTML = '';
-        DICTIONARIES.forEach(dict => {
+        DICTIONARIES.filter(dict => !dict.generated).forEach(dict => {
             const current = settings[dict.name] || { minChars: 0, maxChars: 0 };
             const row = document.createElement('tr');
             row.dataset.dictionary = dict.name;
 
             const nameCell = document.createElement('td');
-            nameCell.textContent = dict.name;
+            nameCell.textContent = dict.label || dict.name;
 
             const minCell = document.createElement('td');
             const minInput = document.createElement('input');
@@ -368,7 +443,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
-    function populateReferenceTable(mappings, dictionarySettings) {
+    function populateReferenceTable(mappings, dictionarySettings, loremIpsumSettings) {
         const referenceTableBody = document.getElementById('referenceTableBody');
         referenceTableBody.innerHTML = '';
         for (const [key, dictionary] of Object.entries(mappings)) {
@@ -377,11 +452,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             const keyCell = document.createElement('td');
             keyCell.textContent = key;
             const dictionaryCell = document.createElement('td');
-            dictionaryCell.textContent = dictionary;
+            dictionaryCell.textContent = getDictionaryLabel(dictionary);
             const minCell = document.createElement('td');
-            minCell.textContent = settings.minChars || 'Any';
+            minCell.textContent = dictionary === 'lorem_ipsum' ? 'Generated' : settings.minChars || 'Any';
             const maxCell = document.createElement('td');
-            maxCell.textContent = settings.maxChars || 'Any';
+            maxCell.textContent = dictionary === 'lorem_ipsum' ? 'Custom' : settings.maxChars || 'Any';
             row.appendChild(keyCell);
             row.appendChild(dictionaryCell);
             row.appendChild(minCell);
@@ -407,7 +482,22 @@ document.addEventListener('DOMContentLoaded', async function () {
                 doubleKeyRow.textContent = `Double Key: Enabled (${result.doubleKeyDelayMs || 250}ms)`;
                 referenceSettings.appendChild(doubleKeyRow);
             }
+            if (Object.values(mappings).includes('lorem_ipsum')) {
+                const normalizedLorem = normalizeLoremIpsumSettings(loremIpsumSettings);
+                const loremRow = document.createElement('div');
+                loremRow.textContent = `Lorem Ipsum: ${normalizedLorem.count} ${normalizedLorem.unit}`
+                    + (normalizedLorem.startWithLorem ? ', starts with Lorem ipsum' : '');
+                referenceSettings.appendChild(loremRow);
+            }
         });
+    }
+
+    function populateLoremIpsumSettings(settings) {
+        const normalized = normalizeLoremIpsumSettings(settings);
+        document.getElementById('loremUnit').value = normalized.unit;
+        document.getElementById('loremCount').value = normalized.count;
+        document.getElementById('toggleLoremStart').checked = normalized.startWithLorem;
+        updateLoremCountLimits();
     }
 
     function populateDictionarySelect() {
@@ -417,7 +507,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             DICTIONARIES.forEach(dict => {
                 const option = document.createElement('option');
                 option.value = dict.name;
-                option.textContent = dict.name;
+                option.textContent = dict.label || dict.name;
                 dictionarySelect.appendChild(option);
             });
         }
@@ -455,6 +545,24 @@ document.addEventListener('DOMContentLoaded', async function () {
         const input = document.getElementById('doubleKeyDelayMs');
         input.disabled = !document.getElementById('toggleDoubleKey').checked;
     }
+
+    function updateLoremCountLimits() {
+        const limits = {
+            words: { max: 200 },
+            sentences: { max: 50 },
+            paragraphs: { max: 20 }
+        };
+        const unit = document.getElementById('loremUnit').value;
+        const input = document.getElementById('loremCount');
+        input.max = limits[unit].max;
+        input.value = normalizeLoremIpsumSettings({
+            unit: unit,
+            count: input.value,
+            startWithLorem: document.getElementById('toggleLoremStart').checked
+        }).count;
+    }
+
+    document.getElementById('loremUnit').addEventListener('change', updateLoremCountLimits);
 
     document.querySelectorAll('.tab-button').forEach(button => {
         button.addEventListener('click', function () {

@@ -2,6 +2,7 @@ export const DICTIONARIES = [
     { name: 'names', key: 'n', default: true },
     { name: 'emails', key: 'e', default: true },
     { name: 'texts', key: 't', default: true },
+    { name: 'lorem_ipsum', label: 'Lorem Ipsum', key: 'l', default: true, generated: true },
     { name: 'descriptions', key: 'd', default: false },
     { name: 'movie_titles', key: 'f', default: false },
     { name: 'movie_descriptions', key: 'p', default: false },
@@ -12,8 +13,8 @@ export const DICTIONARIES = [
 import * as dictionaries from "./dictionaries.js";
 
 export async function fetchData() {
-    const data = DICTIONARIES.reduce((acc, { name }) => {
-        if (name !== 'wikipedia') {
+    const data = DICTIONARIES.reduce((acc, { name, generated }) => {
+        if (name !== 'wikipedia' && !generated) {
             acc[name] = dictionaries[name.toUpperCase()];
         }
         return acc;

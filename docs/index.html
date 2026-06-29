@@ -487,13 +487,13 @@
                 <div>
                     <p class="eyebrow">Chrome extension for development and QA</p>
                     <h1>Web Faker - Random Text Filler</h1>
-                    <p class="lead">Fill text fields and textareas with random test data, Lorem Ipsum-style placeholders, names, emails, descriptions, chat messages, movie data, and Wikipedia summaries from configurable keyboard commands.</p>
+                    <p class="lead">Fill text fields and textareas with random test data, configurable Lorem Ipsum, names, emails, descriptions, chat messages, movie data, and Wikipedia summaries from keyboard commands.</p>
                     <div class="hero-actions">
                         <a class="button" href="https://chromewebstore.google.com/detail/web-faker/fnehnlfgodddgdklgjlkhdjckedibnej" target="_blank" rel="noopener">Install from Chrome Web Store</a>
                         <a class="button secondary" href="#features">View features</a>
                     </div>
                     <div class="meta-row" aria-label="Highlights">
-                        <span class="meta-pill">Version 1.1</span>
+                        <span class="meta-pill">Version 1.2</span>
                         <span class="meta-pill">Manifest V3</span>
                         <span class="meta-pill">Local dictionaries</span>
                         <span class="meta-pill">No analytics</span>
@@ -533,11 +533,15 @@
                 <div class="feature-grid">
                     <article class="feature">
                         <h3>Command mappings</h3>
-                        <p>Map short keys to names, emails, text snippets, chat messages, Wikipedia summaries, movie titles, or movie descriptions.</p>
+                        <p>Map short keys to names, emails, text snippets, Lorem Ipsum, chat messages, Wikipedia summaries, movie titles, or movie descriptions.</p>
                     </article>
                     <article class="feature">
                         <h3>Linked movie data</h3>
                         <p>Insert a movie title, then fill the matching description in the next field. Descriptions are enriched from TMDb overviews.</p>
+                    </article>
+                    <article class="feature">
+                        <h3>Lorem Ipsum generator</h3>
+                        <p>Generate classic Lorem Ipsum as words, sentences, or paragraphs, with an option to start from the standard phrase.</p>
                     </article>
                     <article class="feature">
                         <h3>Length ranges</h3>
@@ -569,12 +573,12 @@
                     <article class="step">
                         <div class="step-number">1</div>
                         <h3>Map commands</h3>
-                        <p>Assign keys like <strong>n</strong>, <strong>e</strong>, <strong>f</strong>, and <strong>p</strong> to dictionaries.</p>
+                        <p>Assign keys like <strong>n</strong>, <strong>e</strong>, <strong>l</strong>, <strong>f</strong>, and <strong>p</strong> to dictionaries.</p>
                     </article>
                     <article class="step">
                         <div class="step-number">2</div>
                         <h3>Set ranges</h3>
-                        <p>Define min and max lengths per dictionary. Use 0 when one side should be unlimited.</p>
+                        <p>Define Lorem Ipsum output and min/max lengths per dictionary. Use 0 when one side should be unlimited.</p>
                     </article>
                     <article class="step">
                         <div class="step-number">3</div>
@@ -601,6 +605,7 @@
                         <li>Names</li>
                         <li>Emails</li>
                         <li>Text snippets</li>
+                        <li>Lorem Ipsum</li>
                         <li>Descriptions</li>
                         <li>Chat messages</li>
                         <li>Wikipedia summaries</li>
@@ -650,7 +655,8 @@
                         <p>Recent updates focus on better testing workflows, more data types, and predictable generated text lengths.</p>
                     </div>
                     <ul class="dictionary-list">
-                        <li>Version 1.1: per-dictionary length ranges</li>
+                        <li>Version 1.2: Lorem Ipsum generator settings</li>
+                        <li>Per-dictionary length ranges</li>
                         <li>Double Key timing control</li>
                         <li>Linked movie titles and descriptions</li>
                         <li>Lazy Wikipedia summaries</li>

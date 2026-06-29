@@ -11,7 +11,7 @@ Use Web Faker when testing registration forms, checkout flows, admin panels, CMS
 - Fill active text inputs and textareas with names, emails, text snippets, Lorem Ipsum, descriptions, chat messages, movie titles, movie descriptions, or a random Wikipedia summary.
 - Trigger replacements by command character, command key, or double key press.
 - Configure key-to-dictionary mappings from the popup.
-- Generate classic Lorem Ipsum as words, sentences, or paragraphs, with an option to start with `Lorem ipsum dolor sit amet`.
+- Generate classic Lorem Ipsum as words, sentences, or paragraphs, with separate settings for each Lorem Ipsum mapping.
 - Configure generated text length range per dictionary. The extension prefers text inside the range and trims by sentence first, then by word when possible.
 - Configure Double Key timing globally so normal typing is less likely to trigger replacements.
 - Restrict the extension to a configured website list.
@@ -55,8 +55,7 @@ To use linked movie data, map one key to `movie_titles` and another to `movie_de
 
 Open the extension popup and use:
 
-- `Mappings`: configure command keys and dictionaries.
-- `Lorem`: configure Lorem Ipsum output type, count, and whether it starts with the classic phrase.
+- `Mappings`: configure command keys, dictionaries, and per-mapping Lorem Ipsum output.
 - `Controls`: configure command character, command key, Double Key mode, Double Key delay, and per-dictionary min/max character counts.
 - `Websites`: optionally enable the extension only on listed hostnames.
 
@@ -87,7 +86,7 @@ Main features:
 - Fill active text inputs and textareas with random placeholder data
 - Generate names, emails, text snippets, Lorem Ipsum, descriptions, chat messages, movie titles, and movie descriptions
 - Generate Wikipedia summaries only when you use the Wikipedia command
-- Configure shortcut keys, Lorem Ipsum output, and per-dictionary text length ranges
+- Configure shortcut keys, per-mapping Lorem Ipsum output, and per-dictionary text length ranges
 - Restrict the extension to selected websites
 - Lightweight and private: no analytics, tracking, or form data collection
 
@@ -140,8 +139,8 @@ A static landing page is available in `docs/index.html`. In GitHub repository se
 1. Load or reload the unpacked extension.
 2. Open a page with an input or textarea.
 3. Type `/t`; it should fill immediately from local data.
-4. Type `/l`; it should insert Lorem Ipsum using the configured unit and count.
-5. Change the Lorem settings to `sentences` and `3`, save, then confirm `/l` inserts three sentences.
+4. Type `/l`; it should insert Lorem Ipsum using that mapping row's configured unit and count.
+5. Add another Lorem Ipsum mapping, configure it as `sentences` and `3`, save, then confirm the two Lorem mappings produce different output shapes.
 6. Type `/w`; only this command should call Wikipedia.
 7. To verify network behavior, inspect the extension service worker from `chrome://extensions/`, open the `Network` tab, and filter by `wikipedia`.
 8. Set dictionary `Min` and `Max` values like `80` and `120`, save settings, and confirm only that dictionary uses that range.

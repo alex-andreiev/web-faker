@@ -19,7 +19,7 @@ const LOREM_START_WORDS = ['lorem', 'ipsum', 'dolor', 'sit', 'amet'];
 
 document.addEventListener('keydown', async function (event) {
     const result = await new Promise((resolve) => {
-        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'commandKey', 'useCommandChar', 'useCommandKey', 'useDoubleKey', 'doubleKeyDelayMs', 'websites', 'useWebsites', 'dictionarySettings', 'loremIpsumSettings', 'maxFakerChars', 'lengthMode'], resolve);
+        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'commandKey', 'useCommandChar', 'useCommandKey', 'useDoubleKey', 'doubleKeyDelayMs', 'websites', 'useWebsites', 'dictionarySettings', 'loremIpsumMappingSettings', 'maxFakerChars', 'lengthMode'], resolve);
     });
     const enabled = result.enabled;
     const mappings = result.mappings || {};
@@ -40,7 +40,7 @@ document.addEventListener('keydown', async function (event) {
                 const dictionary = mappings[key];
                 if (!dictionary) return;
                 const activeElement = document.activeElement;
-                const replacement = await getRandomItem(dictionary, result, activeElement);
+                const replacement = await getRandomItem(dictionary, result, activeElement, key);
                 if (activeElement.tagName.toLowerCase() === 'input' || activeElement.tagName.toLowerCase() === 'textarea') {
                     activeElement.value = replacement;
                 }
@@ -54,7 +54,7 @@ document.addEventListener('keydown', async function (event) {
             const dictionary = mappings[event.key];
             if (!dictionary) return;
             const activeElement = document.activeElement;
-            const replacement = await getRandomItem(dictionary, result, activeElement);
+            const replacement = await getRandomItem(dictionary, result, activeElement, event.key);
             if (activeElement.tagName.toLowerCase() === 'input' || activeElement.tagName.toLowerCase() === 'textarea') {
                 activeElement.value = replacement;
             }
@@ -66,7 +66,7 @@ document.addEventListener('keydown', async function (event) {
 
 document.addEventListener('input', async function (event) {
     const result = await new Promise((resolve) => {
-        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'useCommandChar', 'websites', 'useWebsites', 'dictionarySettings', 'loremIpsumSettings', 'maxFakerChars', 'lengthMode'], resolve);
+        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'useCommandChar', 'websites', 'useWebsites', 'dictionarySettings', 'loremIpsumMappingSettings', 'maxFakerChars', 'lengthMode'], resolve);
     });
     const enabled = result.enabled;
     const mappings = result.mappings || {};
@@ -84,19 +84,19 @@ document.addEventListener('input', async function (event) {
             const command = value.substring(commandChar.length);
             const dictionary = mappings[command];
             if (!dictionary) return;
-            const replacement = await getRandomItem(dictionary, result, event.target);
+            const replacement = await getRandomItem(dictionary, result, event.target, command);
             event.target.value = replacement;
         }
     }
 });
 
-async function getRandomItem(type, options = {}, target = null) {
+async function getRandomItem(type, options = {}, target = null, mappingKey = null) {
     const { fetchData, fetchWikipediaData, fetchMovieData } = await import(chrome.runtime.getURL('src/data/index.js'));
     if (type === 'movie_titles' || type === 'movie_descriptions') {
         return getMovieItem(type, await fetchMovieData(), options, target);
     }
     if (type === 'lorem_ipsum') {
-        return generateLoremIpsum(options.loremIpsumSettings);
+        return generateLoremIpsum(getLoremIpsumMappingSettings(mappingKey, options));
     }
 
     const items = type === 'wikipedia'
@@ -195,6 +195,13 @@ function trimToWordBoundary(value, maxLength) {
     return wordBoundaryIndex > 0 ? trimmed.slice(0, wordBoundaryIndex).trimEnd() : trimmed;
 }
 
+
+function getLoremIpsumMappingSettings(mappingKey, options = {}) {
+    const settings = options.loremIpsumMappingSettings || {};
+    return mappingKey && settings[mappingKey]
+        ? settings[mappingKey]
+        : {};
+}
 
 function getLoremIpsumSettings(settings = {}) {
     const unit = ['words', 'sentences', 'paragraphs'].includes(settings.unit)

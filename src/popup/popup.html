@@ -24,7 +24,6 @@
     <div id="settings" class="settings" style="display:none;">
         <div class="tabs">
             <button class="tab-button" data-tab="mappingsTab">Mappings</button>
-            <button class="tab-button" data-tab="loremTab">Lorem</button>
             <button class="tab-button" data-tab="controlsTab">Controls</button>
             <button class="tab-button" data-tab="websitesTab">Websites</button>
         </div>
@@ -46,32 +45,6 @@
                 <button id="addMapping">+</button>
                 <button id="resetSettings">Reset</button>
                 <button id="saveMappings">Save</button>
-            </div>
-        </div>
-        <div id="loremTab" class="tab-content" style="display:none;">
-            <h2>Lorem Ipsum Generator</h2>
-            <p class="settings-hint">Configure the generated output used by the Lorem Ipsum dictionary.</p>
-            <div class="lorem-option-container">
-                <label for="loremUnit">Generate:</label>
-                <select id="loremUnit">
-                    <option value="words">Words</option>
-                    <option value="sentences">Sentences</option>
-                    <option value="paragraphs">Paragraphs</option>
-                </select>
-            </div>
-            <div class="lorem-option-container">
-                <label for="loremCount">Count:</label>
-                <input type="number" id="loremCount" min="1" max="200" step="1" value="2">
-            </div>
-            <div class="lorem-option-container" title="Start generated text with the classic Lorem ipsum dolor sit amet phrase.">
-                <label for="toggleLoremStart">Start with Lorem ipsum:</label>
-                <label class="switch settings-toggle">
-                    <input type="checkbox" id="toggleLoremStart">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-            <div class="buttons">
-                <button id="saveLoremIpsum">Save</button>
             </div>
         </div>
         <div id="controlsTab" class="tab-content" style="display:none;">

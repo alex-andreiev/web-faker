@@ -171,7 +171,7 @@ input:checked + .slider:before {
 
 .tabs {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 6px;
     margin-bottom: 12px;
 }
@@ -262,12 +262,53 @@ select:focus {
     text-align: right;
 }
 
+
+.mapping-settings-row td {
+    padding-top: 0;
+    background: #fbfdff;
+}
+
+.mapping-lorem-settings {
+    grid-template-columns: minmax(0, 1fr) 56px auto;
+    gap: 6px;
+    align-items: center;
+    padding: 4px 0 2px;
+}
+
+.mapping-lorem-settings select,
+.mapping-lorem-settings input[type="number"] {
+    min-width: 0;
+    min-height: 26px;
+    padding: 3px 6px;
+    font-size: 12px;
+}
+
+.mapping-lorem-settings select {
+    width: 100%;
+}
+
+.mapping-lorem-settings input[type="number"] {
+    text-align: right;
+}
+
+.mapping-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #486581;
+    font-size: 12px;
+}
+
+.mapping-checkbox input {
+    width: auto;
+    min-height: 0;
+}
+
 .command-char-container,
 .command-key-container,
 .double-key-container,
 .double-key-delay-container,
 .length-container,
-.lorem-option-container,
 .website-toggle-container,
 .website-container {
     display: grid;
@@ -281,17 +322,14 @@ select:focus {
 .command-key-container input,
 .double-key-delay-container input,
 .length-container input,
-.length-container select,
-.lorem-option-container input,
-.lorem-option-container select {
+.length-container select {
     width: 128px;
 }
 
 .command-char-container input,
 .command-key-container input,
 .double-key-delay-container input,
-.length-container input,
-.lorem-option-container input {
+.length-container input {
     text-align: right;
 }
 

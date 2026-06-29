@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Web Faker fills web inputs with realistic test data using shortcuts, dictionaries, linked movie data, and configurable length rules.">
-    <title>Web Faker - Chrome Extension</title>
+    <meta name="description" content="Web Faker fills text fields with random test data, Lorem Ipsum placeholders, names, emails, and local dictionaries for development and QA.">
+    <title>Web Faker - Random Text Filler for Chrome</title>
     <style>
         * {
             box-sizing: border-box;
@@ -380,6 +380,31 @@
             font-size: 14px;
         }
 
+        .trust-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .trust-item {
+            padding: 18px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .trust-item h3 {
+            margin: 0 0 8px;
+            font-size: 17px;
+        }
+
+        .trust-item p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.55;
+            font-size: 14px;
+        }
+
         .footer {
             padding: 28px 0;
             color: var(--muted);
@@ -405,7 +430,8 @@
             }
 
             .feature-grid,
-            .steps {
+            .steps,
+            .trust-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
@@ -429,6 +455,7 @@
 
             .feature-grid,
             .steps,
+            .trust-grid,
             .dictionary-list {
                 grid-template-columns: 1fr;
             }
@@ -446,6 +473,8 @@
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#workflow">Workflow</a>
+                <a href="#privacy">Privacy</a>
+                <a href="#changelog">Changelog</a>
                 <a href="#data">Data</a>
                 <a class="button secondary" href="https://chromewebstore.google.com/detail/web-faker/fnehnlfgodddgdklgjlkhdjckedibnej" target="_blank" rel="noopener">Install</a>
             </div>
@@ -456,9 +485,9 @@
         <section class="hero">
             <div class="shell hero-grid">
                 <div>
-                    <p class="eyebrow">Chrome extension for form testing</p>
-                    <h1>Web Faker</h1>
-                    <p class="lead">Fill web inputs and textareas with realistic test data using command shortcuts, dictionaries, linked movie data, and per-dictionary length rules.</p>
+                    <p class="eyebrow">Chrome extension for development and QA</p>
+                    <h1>Web Faker - Random Text Filler</h1>
+                    <p class="lead">Fill text fields and textareas with random test data, Lorem Ipsum-style placeholders, names, emails, descriptions, chat messages, movie data, and Wikipedia summaries from configurable keyboard commands.</p>
                     <div class="hero-actions">
                         <a class="button" href="https://chromewebstore.google.com/detail/web-faker/fnehnlfgodddgdklgjlkhdjckedibnej" target="_blank" rel="noopener">Install from Chrome Web Store</a>
                         <a class="button secondary" href="#features">View features</a>
@@ -467,6 +496,7 @@
                         <span class="meta-pill">Version 1.1</span>
                         <span class="meta-pill">Manifest V3</span>
                         <span class="meta-pill">Local dictionaries</span>
+                        <span class="meta-pill">No analytics</span>
                     </div>
                 </div>
 
@@ -497,8 +527,8 @@
         <section id="features">
             <div class="shell">
                 <div class="section-head">
-                    <h2>Built for repeated form work</h2>
-                    <p>Web Faker keeps fake data close to the field you are testing. Configure the shortcuts once, then fill forms directly from the keyboard.</p>
+                    <h2>Built for repeated testing work</h2>
+                    <p>Web Faker keeps placeholder data close to the field you are testing. Configure the shortcuts once, then fill active text fields directly from the keyboard.</p>
                 </div>
                 <div class="feature-grid">
                     <article class="feature">
@@ -533,7 +563,7 @@
             <div class="shell">
                 <div class="section-head">
                     <h2>Fast setup, predictable output</h2>
-                    <p>The extension is designed for QA sessions, admin panels, CMS testing, onboarding flows, and any UI where fields need realistic data.</p>
+                    <p>The extension is designed for QA sessions, admin panels, CMS testing, checkout flows, landing pages, onboarding flows, and prototypes where fields need plausible data.</p>
                 </div>
                 <div class="steps">
                     <article class="step">
@@ -588,12 +618,61 @@
                 </div>
             </div>
         </section>
+
+        <section id="privacy" class="workflow">
+            <div class="shell">
+                <div class="section-head">
+                    <h2>Private by default</h2>
+                    <p>Web Faker is designed for development and QA workflows where test data should stay local unless you explicitly use a network-backed dictionary.</p>
+                </div>
+                <div class="trust-grid">
+                    <article class="trust-item">
+                        <h3>No tracking</h3>
+                        <p>The extension does not include analytics scripts, advertising tags, or behavioral tracking.</p>
+                    </article>
+                    <article class="trust-item">
+                        <h3>No form collection</h3>
+                        <p>Form contents are not stored remotely or sent to a Web Faker server.</p>
+                    </article>
+                    <article class="trust-item">
+                        <h3>Local-first data</h3>
+                        <p>Most dictionaries are bundled locally. Wikipedia summaries are fetched only when the Wikipedia command is used.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="changelog">
+            <div class="shell data-layout">
+                <div>
+                    <div class="section-head">
+                        <h2>Changelog</h2>
+                        <p>Recent updates focus on better testing workflows, more data types, and predictable generated text lengths.</p>
+                    </div>
+                    <ul class="dictionary-list">
+                        <li>Version 1.1: per-dictionary length ranges</li>
+                        <li>Double Key timing control</li>
+                        <li>Linked movie titles and descriptions</li>
+                        <li>Lazy Wikipedia summaries</li>
+                    </ul>
+                </div>
+                <div class="code-panel">
+                    <h3>Support</h3>
+                    <pre><code>For bug reports and feature requests:
+open a GitHub Issue with:
+- Chrome version
+- Web Faker version
+- Page type
+- Command or dictionary used</code></pre>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer class="footer">
         <div class="shell">
             <span>Web Faker for Chrome</span>
-            <span>IMDb datasets do not include plot summaries; TMDb overviews require a TMDb API token for refreshes.</span>
+            <span>No analytics or form data collection. Optional Wikipedia summaries are fetched only when used.</span>
         </div>
     </footer>
 </body>

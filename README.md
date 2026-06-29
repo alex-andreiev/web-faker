@@ -1,10 +1,14 @@
-# Web Faker
+# Web Faker - Random Text Filler
 
-Chrome extension for filling inputs and textareas with random fake data by short commands.
+Web Faker helps developers, QA testers, and designers fill text fields and textareas with realistic test data, Lorem Ipsum-style placeholders, names, emails, descriptions, chat messages, movie data, and Wikipedia summaries from configurable keyboard commands.
+
+## Use Cases
+
+Use Web Faker when testing registration forms, checkout flows, admin panels, CMS screens, landing pages, prototypes, and UI mockups. It is built for repeated development and QA work where fields need plausible placeholder content without leaving the browser.
 
 ## Features
 
-- Fill active fields with names, emails, text snippets, descriptions, chat messages, movie titles, movie descriptions, or a random Wikipedia summary.
+- Fill active text inputs and textareas with names, emails, text snippets, descriptions, chat messages, movie titles, movie descriptions, or a random Wikipedia summary.
 - Trigger replacements by command character, command key, or double key press.
 - Configure key-to-dictionary mappings from the popup.
 - Configure generated text length range per dictionary. The extension prefers text inside the range and trims by sentence first, then by word when possible.
@@ -12,6 +16,7 @@ Chrome extension for filling inputs and textareas with random fake data by short
 - Restrict the extension to a configured website list.
 - Movie title and movie description dictionaries are linked: after inserting a movie title, the next movie description uses the same movie.
 - Wikipedia data is fetched lazily only when the `wikipedia` dictionary is used.
+- Lightweight and private: no analytics, tracking scripts, or remote storage for form contents.
 
 ## Install Locally
 
@@ -52,6 +57,51 @@ Open the extension popup and use:
 - `Websites`: optionally enable the extension only on listed hostnames.
 
 Per-dictionary `Min` or `Max` set to `0` means no limit for that side of the range. `Double key delay` is used only when `Double Key` is enabled.
+
+## Chrome Web Store Listing Copy
+
+Suggested title:
+
+```text
+Web Faker - Random Text Filler
+```
+
+Suggested short summary:
+
+```text
+Fill text fields with random test data and Lorem Ipsum placeholders using short commands for development and QA.
+```
+
+Suggested description:
+
+```text
+Web Faker helps developers, QA testers, and designers quickly fill web text fields and textareas with realistic test data.
+
+Use it when testing registration forms, checkout flows, admin panels, CMS screens, landing pages, prototypes, and UI mockups.
+
+Main features:
+- Fill active text inputs and textareas with random placeholder data
+- Generate names, emails, text snippets, descriptions, chat messages, movie titles, and movie descriptions
+- Generate Wikipedia summaries only when you use the Wikipedia command
+- Configure shortcut keys and per-dictionary text length ranges
+- Restrict the extension to selected websites
+- Lightweight and private: no analytics, tracking, or form data collection
+
+Perfect for:
+- Web developers
+- QA testers
+- UI/UX designers
+- No-code builders
+- Anyone testing forms, content layouts, or prototypes
+```
+
+## Privacy
+
+Web Faker does not collect analytics, track browsing activity, or send form contents to a remote server. Most generated data comes from local dictionaries bundled with the extension. The only built-in network call is the optional Wikipedia dictionary, which requests a random summary from Wikipedia when that command is used.
+
+## Support
+
+Use GitHub Issues for bug reports, feature requests, and support questions. Include the browser version, extension version, page type, and the command or dictionary involved.
 
 ## IMDb Movie Dataset
 

@@ -14,7 +14,7 @@
       "js": [ "src/content.js" ],
       "matches": [ "\u003Call_urls>" ]
    } ],
-   "description": "Automatically fill text inputs with random data.",
+   "description": "Fill text fields with random test data and Lorem Ipsum placeholders using short commands for development and QA.",
    "host_permissions": [ "https://en.wikipedia.org/*" ],
    "icons": {
       "128": "src/icons/icon128.png",
@@ -23,7 +23,7 @@
    },
    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx+ZplTGbzWxGOeCHMRkk6irxHl5qKcf1utob2Mxht5jAYHglrwulV2avUO4G33z1NRW2vEA0D9EIL65yB/bVMegXQtQvRUlYrg7bQGmRx8H/jeR06wcZWCpE8iJHVXti8NvHxSyzby27GL79Rn17bYFnsEIorcpzCnpW8j9hn6adqScVq5MRoqHsOzGZdN0/MmocADMTF/5H3mNlNxc2bOei9mj6e1pOsktoItlVIuTAT04XyJ4ix+dOIVs5b8SWgvV9sDM+ltdG9vxPe1UG+4mDv9uyDd/CxlgzmMmvDGK7sGIAwwAuyYzj1tw5vcZcFesnrRwMFUB8a0ExjaEWgwIDAQAB",
    "manifest_version": 3,
-   "name": "Web Faker",
+   "name": "Web Faker - Random Text Filler",
    "permissions": [ "storage", "activeTab" ],
    "update_url": "https://clients2.google.com/service/update2/crx",
    "version": "1.1",

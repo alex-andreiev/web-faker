@@ -1,15 +1,21 @@
 let lastKey = null;
 let lastKeyTime = 0;
+let lastMovie = null;
+let lastMovieTarget = null;
+let lastMovieOutputType = null;
+let lastMovieTime = 0;
+const MOVIE_LINK_TTL_MS = 60 * 1000;
 
 document.addEventListener('keydown', async function (event) {
     const result = await new Promise((resolve) => {
-        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'commandKey', 'useCommandChar', 'useCommandKey', 'useDoubleKey', 'websites', 'useWebsites'], resolve);
+        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'commandKey', 'useCommandChar', 'useCommandKey', 'useDoubleKey', 'doubleKeyDelayMs', 'websites', 'useWebsites', 'dictionarySettings', 'maxFakerChars', 'lengthMode'], resolve);
     });
     const enabled = result.enabled;
     const mappings = result.mappings || {};
     const commandKey = result.commandKey || 'AltLeft';
     const useCommandKey = result.useCommandKey !== false;
     const useDoubleKey = result.useDoubleKey !== false;
+    const doubleKeyDelayMs = Math.min(1000, Math.max(50, Number(result.doubleKeyDelayMs) || 250));
     const websites = result.websites || [];
     const useWebsites = result.useWebsites !== false;
     const currentWebsite = window.location.hostname;
@@ -22,8 +28,8 @@ document.addEventListener('keydown', async function (event) {
                 const key = e.key;
                 const dictionary = mappings[key];
                 if (!dictionary) return;
-                const replacement = await getRandomItem(dictionary);
                 const activeElement = document.activeElement;
+                const replacement = await getRandomItem(dictionary, result, activeElement);
                 if (activeElement.tagName.toLowerCase() === 'input' || activeElement.tagName.toLowerCase() === 'textarea') {
                     activeElement.value = replacement;
                 }
@@ -33,11 +39,11 @@ document.addEventListener('keydown', async function (event) {
 
     if (useDoubleKey) {
         const currentTime = new Date().getTime();
-        if (lastKey === event.key && (currentTime - lastKeyTime) < 500) {
+        if (lastKey === event.key && (currentTime - lastKeyTime) <= doubleKeyDelayMs) {
             const dictionary = mappings[event.key];
             if (!dictionary) return;
-            const replacement = await getRandomItem(dictionary);
             const activeElement = document.activeElement;
+            const replacement = await getRandomItem(dictionary, result, activeElement);
             if (activeElement.tagName.toLowerCase() === 'input' || activeElement.tagName.toLowerCase() === 'textarea') {
                 activeElement.value = replacement;
             }
@@ -49,7 +55,7 @@ document.addEventListener('keydown', async function (event) {
 
 document.addEventListener('input', async function (event) {
     const result = await new Promise((resolve) => {
-        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'useCommandChar', 'websites', 'useWebsites'], resolve);
+        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'useCommandChar', 'websites', 'useWebsites', 'dictionarySettings', 'maxFakerChars', 'lengthMode'], resolve);
     });
     const enabled = result.enabled;
     const mappings = result.mappings || {};
@@ -67,17 +73,111 @@ document.addEventListener('input', async function (event) {
             const command = value.substring(commandChar.length);
             const dictionary = mappings[command];
             if (!dictionary) return;
-            const replacement = await getRandomItem(dictionary);
+            const replacement = await getRandomItem(dictionary, result, event.target);
             event.target.value = replacement;
         }
     }
 });
 
-async function getRandomItem(type) {
-    const { fetchData } = await import(chrome.runtime.getURL('src/data/index.js'));
-    const data = await fetchData();
-    const items = data[type];
+async function getRandomItem(type, options = {}, target = null) {
+    const { fetchData, fetchWikipediaData, fetchMovieData } = await import(chrome.runtime.getURL('src/data/index.js'));
+    if (type === 'movie_titles' || type === 'movie_descriptions') {
+        return getMovieItem(type, await fetchMovieData(), options, target);
+    }
+
+    const items = type === 'wikipedia'
+        ? await fetchWikipediaData()
+        : (await fetchData())[type];
+
     if (!items || items.length === 0) return '';
-    return items[Math.floor(Math.random() * items.length)];
+
+    const range = getLengthRange(type, options);
+    const candidates = range.minChars > 0 || range.maxChars > 0
+        ? items.filter(item => isInLengthRange(item, range))
+        : items;
+    const sourceItems = candidates.length > 0 ? candidates : items;
+    const item = sourceItems[Math.floor(Math.random() * sourceItems.length)];
+
+    return applyLengthSettings(item, type, options);
+}
+
+
+function getMovieItem(type, movies, options, target) {
+    const now = Date.now();
+    const hasRecentMovie = lastMovie && (now - lastMovieTime) <= MOVIE_LINK_TTL_MS;
+    const targetChanged = target && target !== lastMovieTarget;
+    const shouldAutoDescribeLastMovie = type === 'movie_titles'
+        && hasRecentMovie
+        && lastMovieOutputType === 'movie_titles'
+        && targetChanged;
+    const shouldUseDescription = type === 'movie_descriptions' || shouldAutoDescribeLastMovie;
+    const movie = shouldUseDescription && hasRecentMovie
+        ? lastMovie
+        : movies[Math.floor(Math.random() * movies.length)];
+    const outputType = shouldUseDescription ? 'movie_descriptions' : 'movie_titles';
+
+    lastMovie = movie;
+    lastMovieTarget = target || lastMovieTarget;
+    lastMovieOutputType = outputType;
+    lastMovieTime = now;
+
+    return applyLengthSettings(outputType === 'movie_titles' ? movie.title : movie.description, outputType, options);
+}
+
+function getDictionaryOptions(type, options) {
+    return options.dictionarySettings && options.dictionarySettings[type]
+        ? options.dictionarySettings[type]
+        : {};
+}
+
+function getLengthRange(type, options = {}) {
+    const dictionaryOptions = getDictionaryOptions(type, options);
+    const legacyMax = Number(options.maxFakerChars) || 0;
+    const minChars = Math.max(0, Number(dictionaryOptions.minChars) || 0);
+    const maxChars = Math.max(0, Number(dictionaryOptions.maxChars ?? legacyMax) || 0);
+
+    return maxChars > 0 && minChars > maxChars
+        ? { minChars: maxChars, maxChars: minChars }
+        : { minChars, maxChars };
+}
+
+function isInLengthRange(value, range) {
+    return (range.minChars === 0 || value.length >= range.minChars)
+        && (range.maxChars === 0 || value.length <= range.maxChars);
+}
+
+function applyLengthSettings(value, type, options = {}) {
+    const range = getLengthRange(type, options);
+
+    return range.maxChars > 0 && value.length > range.maxChars
+        ? trimToSentenceOrWordBoundary(value, range.maxChars)
+        : value;
+}
+
+function trimToSentenceOrWordBoundary(value, maxLength) {
+    const sentenceTrimmed = trimToSentenceBoundary(value, maxLength);
+    return sentenceTrimmed || trimToWordBoundary(value, maxLength);
+}
+
+function trimToSentenceBoundary(value, maxLength) {
+    const trimmed = value.slice(0, maxLength).trimEnd();
+    const sentenceBoundaryIndex = Math.max(
+        trimmed.lastIndexOf('.'),
+        trimmed.lastIndexOf('!'),
+        trimmed.lastIndexOf('?')
+    );
+
+    return sentenceBoundaryIndex > 0 ? trimmed.slice(0, sentenceBoundaryIndex + 1).trimEnd() : '';
+}
+
+function trimToWordBoundary(value, maxLength) {
+    const trimmed = value.slice(0, maxLength).trimEnd();
+    const wordBoundaryIndex = Math.max(
+        trimmed.lastIndexOf(' '),
+        trimmed.lastIndexOf('\n'),
+        trimmed.lastIndexOf('\t')
+    );
+
+    return wordBoundaryIndex > 0 ? trimmed.slice(0, wordBoundaryIndex).trimEnd() : trimmed;
 }
 

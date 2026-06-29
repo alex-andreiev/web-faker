@@ -3,6 +3,8 @@ export const DICTIONARIES = [
     { name: 'emails', key: 'e', default: true },
     { name: 'texts', key: 't', default: true },
     { name: 'descriptions', key: 'd', default: false },
+    { name: 'movie_titles', key: 'f', default: false },
+    { name: 'movie_descriptions', key: 'p', default: false },
     { name: 'wikipedia', key: 'w', default: false },
     { name: 'chat_messages', key: 'm', default: false }
 ];
@@ -11,17 +13,16 @@ import * as dictionaries from "./dictionaries.js";
 
 export async function fetchData() {
     const data = DICTIONARIES.reduce((acc, { name }) => {
-        acc[name] = dictionaries[name.toUpperCase()];
+        if (name !== 'wikipedia') {
+            acc[name] = dictionaries[name.toUpperCase()];
+        }
         return acc;
     }, {});
 
-    const wikipediaData = await fetchWikipediaData();
-    const allData = { ...data, wikipedia: wikipediaData };
-
-    return allData;
+    return data;
 }
 
-async function fetchWikipediaData() {
+export async function fetchWikipediaData() {
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({ action: "fetchWikipediaData" }, response => {
             if (chrome.runtime.lastError) {
@@ -36,4 +37,8 @@ async function fetchWikipediaData() {
             }
         });
     });
+}
+
+export async function fetchMovieData() {
+    return dictionaries.MOVIES;
 }

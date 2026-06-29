@@ -4,3 +4,4 @@ export { TEXTS } from "./texts.js";
 export { DESCRIPTIONS } from "./descriptions.js";
 export { CHAT_MESSAGES } from "./chat_messages.js";
 // export { WIKIPEDIA } from "./wikipedia.js";
+export { MOVIES, MOVIE_TITLES, MOVIE_DESCRIPTIONS } from "./movies.js";

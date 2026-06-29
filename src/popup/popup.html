@@ -51,7 +51,7 @@
             <h2>Controls</h2>
             <div class="command-char-container">
                 <label for="commandChar">Command Char:</label>
-                <input type="text" id="commandChar" maxlength="1" value="/" style="width: 100px; text-align: right;">
+                <input type="text" id="commandChar" maxlength="1" value="/">
                 <label class="switch settings-toggle">
                     <input type="checkbox" id="toggleCommandChar">
                     <span class="slider round"></span>
@@ -59,18 +59,39 @@
             </div>
             <div class="command-key-container">
                 <label for="commandKey">Command Key:</label>
-                <input type="text" id="commandKey" value="Control" style="width: 100px; text-align: right;" title="Recommended keys: AltLeft, AltRight, ControlLeft, ControlRight, ShiftLeft, ShiftRight">
+                <input type="text" id="commandKey" value="Control" title="Recommended keys: AltLeft, AltRight, ControlLeft, ControlRight, ShiftLeft, ShiftRight">
                 <label class="switch settings-toggle">
                     <input type="checkbox" id="toggleCommandKey">
                     <span class="slider round"></span>
                 </label>
             </div>
-            <div class="double-key-container">
+            <div class="double-key-container" title="Trigger a mapped dictionary when the same key is pressed twice within the configured delay.">
                 <label for="toggleDoubleKey">Double Key:</label>
                 <label class="switch settings-toggle">
                     <input type="checkbox" id="toggleDoubleKey">
                     <span class="slider round"></span>
                 </label>
+            </div>
+            <div class="double-key-delay-container" title="Maximum time between two presses of the same key for Double Key to trigger. Lower values reduce accidental fills while typing.">
+                <label for="doubleKeyDelayMs">Double key delay (ms):</label>
+                <input type="number" id="doubleKeyDelayMs" min="50" max="1000" step="25" value="250">
+            </div>
+            <h2>Dictionary Lengths</h2>
+            <p class="settings-hint">0 means no limit. Text is trimmed by sentence first, then by word when possible.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dictionary</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                    </tr>
+                </thead>
+                <tbody id="dictionarySettingsTableBody">
+                    <!-- Rows will be populated by JavaScript -->
+                </tbody>
+            </table>
+            <div class="buttons">
+                <button id="saveControls">Save</button>
             </div>
         </div>
         <div id="websitesTab" class="tab-content" style="display:none;">
@@ -83,7 +104,7 @@
                 </label>
             </div>
             <div class="website-container">
-                <input type="text" id="websiteInput" placeholder="Enter website URL" style="width: 200px;">
+                <input type="text" id="websiteInput" placeholder="Enter website URL">
                 <button id="addWebsite">Add</button>
             </div>
             <table>
@@ -106,6 +127,8 @@
                 <tr>
                     <th>Key</th>
                     <th>Dictionary</th>
+                    <th>Min</th>
+                    <th>Max</th>
                 </tr>
             </thead>
             <tbody id="referenceTableBody">

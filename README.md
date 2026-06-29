@@ -77,6 +77,10 @@ scripts/enrich_movie_descriptions_tmdb.py
 
 Use `--language en-US`, `--language uk-UA`, or another TMDb language code to choose overview language.
 
+## GitHub Pages
+
+A static landing page is available in `docs/index.html`. In GitHub repository settings, enable Pages from the `main` branch and `/docs` folder.
+
 ## Testing
 
 1. Load or reload the unpacked extension.
@@ -94,3 +98,7 @@ Use `--language en-US`, `--language uk-UA`, or another TMDb language code to cho
 - `src/background.js`: background service worker, including Wikipedia fetch handling.
 - `src/data/`: built-in data dictionaries, including generated IMDb movie records.
 - `src/popup/`: popup UI, settings, and styles.
+
+## License
+
+Web Faker is available for non-commercial use. Commercial use requires prior written permission from the author. See `LICENSE`.

@@ -101,4 +101,4 @@ A static landing page is available in `docs/index.html`. In GitHub repository se
 
 ## License
 
-Web Faker is available for non-commercial use. Commercial use requires prior written permission from the author. See `LICENSE`.
+MIT. See `LICENSE`.

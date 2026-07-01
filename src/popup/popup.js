@@ -80,7 +80,11 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (result.websites === undefined) {
             chrome.storage.sync.set({ websites: [] });
         } else {
-            populateWebsiteTable(result.websites);
+            const websiteState = normalizeWebsites(result.websites);
+            if (websiteState.changed) {
+                chrome.storage.sync.set({ websites: websiteState.websites });
+            }
+            populateWebsiteTable(websiteState.websites);
         }
         if (result.useWebsites === undefined) {
             chrome.storage.sync.set({ useWebsites: false });
@@ -216,15 +220,20 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     document.getElementById('addWebsite').addEventListener('click', function () {
         const websiteInput = document.getElementById('websiteInput');
-        const website = websiteInput.value.trim();
+        const website = normalizeWebsite(websiteInput.value);
         if (website) {
             chrome.storage.sync.get(['websites'], function (result) {
-                const websites = result.websites || [];
+                const websiteState = normalizeWebsites(result.websites || []);
+                const websites = websiteState.websites;
                 if (!websites.includes(website)) {
                     websites.push(website);
                     chrome.storage.sync.set({ websites: websites }, function () {
                         populateWebsiteTable(websites);
                         websiteInput.value = '';
+                    });
+                } else if (websiteState.changed) {
+                    chrome.storage.sync.set({ websites: websites }, function () {
+                        populateWebsiteTable(websites);
                     });
                 }
             });
@@ -599,6 +608,38 @@ document.addEventListener('DOMContentLoaded', async function () {
                 dictionarySelect.appendChild(option);
             });
         }
+    }
+
+    function normalizeWebsites(websites = []) {
+        const normalizedWebsites = [];
+        let changed = false;
+
+        websites.forEach(website => {
+            const normalizedWebsite = normalizeWebsite(website);
+            if (normalizedWebsite !== website) changed = true;
+            if (normalizedWebsite && !normalizedWebsites.includes(normalizedWebsite)) {
+                normalizedWebsites.push(normalizedWebsite);
+            }
+        });
+
+        if (normalizedWebsites.length !== websites.length) changed = true;
+
+        return { websites: normalizedWebsites, changed };
+    }
+
+    function normalizeWebsite(website) {
+        const value = String(website || '').trim().toLowerCase();
+        if (!value) return '';
+
+        if (value.includes('://')) {
+            try {
+                return new URL(value).origin;
+            } catch (error) {
+                return value.split('/')[0];
+            }
+        }
+
+        return value.split('/')[0];
     }
 
     function populateWebsiteTable(websites) {

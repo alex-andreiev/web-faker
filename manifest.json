@@ -26,7 +26,7 @@
    "name": "Web Faker - Random Text Filler",
    "permissions": [ "storage", "activeTab" ],
    "update_url": "https://clients2.google.com/service/update2/crx",
-   "version": "1.2",
+   "version": "1.3",
    "web_accessible_resources": [ {
       "matches": [ "\u003Call_urls>" ],
       "resources": [ "src/data/index.js", "src/data/dictionaries.js", "src/data/names.js", "src/data/emails.js", "src/data/texts.js", "src/data/descriptions.js", "src/data/wikipedia.js", "src/data/chat_messages.js", "src/data/movies.js" ]

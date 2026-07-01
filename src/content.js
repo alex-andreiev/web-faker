@@ -28,10 +28,10 @@ document.addEventListener('keydown', async function (event) {
     const useDoubleKey = result.useDoubleKey !== false;
     const doubleKeyDelayMs = Math.min(1000, Math.max(50, Number(result.doubleKeyDelayMs) || 250));
     const websites = result.websites || [];
-    const useWebsites = result.useWebsites !== false;
-    const currentWebsite = window.location.hostname;
+    const useWebsites = result.useWebsites === true;
+    const currentWebsite = window.location.origin;
 
-    if (!enabled || (useWebsites && websites.length > 0 && !websites.includes(currentWebsite))) return;
+    if (!enabled || (useWebsites && !isWebsiteAllowed(currentWebsite, websites))) return;
 
     if (useCommandKey && event.code === commandKey) {
         document.addEventListener('keydown', async function (e) {
@@ -73,10 +73,10 @@ document.addEventListener('input', async function (event) {
     const commandChar = result.commandChar || '/';
     const useCommandChar = result.useCommandChar !== false;
     const websites = result.websites || [];
-    const useWebsites = result.useWebsites !== false;
-    const currentWebsite = window.location.hostname;
+    const useWebsites = result.useWebsites === true;
+    const currentWebsite = window.location.origin;
 
-    if (!enabled || (useWebsites && websites.length > 0 && !websites.includes(currentWebsite))) return;
+    if (!enabled || (useWebsites && !isWebsiteAllowed(currentWebsite, websites))) return;
 
     if (useCommandChar && (event.target.tagName.toLowerCase() === 'input' || event.target.tagName.toLowerCase() === 'textarea')) {
         const value = event.target.value;
@@ -113,6 +113,34 @@ async function getRandomItem(type, options = {}, target = null, mappingKey = nul
     const item = sourceItems[Math.floor(Math.random() * sourceItems.length)];
 
     return applyLengthSettings(item, type, options);
+}
+
+
+function isWebsiteAllowed(currentWebsite, websites) {
+    const currentOrigin = normalizeWebsite(currentWebsite);
+    const currentHost = window.location.host.toLowerCase();
+    const currentHostname = window.location.hostname.toLowerCase();
+    if (!currentOrigin) return false;
+
+    return websites
+        .map(normalizeWebsite)
+        .filter(Boolean)
+        .some(website => website === currentOrigin || website === currentHost || website === currentHostname);
+}
+
+function normalizeWebsite(website) {
+    const value = String(website || '').trim().toLowerCase();
+    if (!value) return '';
+
+    if (value.includes('://')) {
+        try {
+            return new URL(value).origin;
+        } catch (error) {
+            return value.split('/')[0];
+        }
+    }
+
+    return value.split('/')[0];
 }
 
 

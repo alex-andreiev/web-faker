@@ -240,6 +240,13 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     });
 
+    document.getElementById('websiteInput').addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            document.getElementById('addWebsite').click();
+        }
+    });
+
     function getDefaultMappings() {
         return DICTIONARIES.filter(dict => dict.default).reduce((acc, dict) => {
             acc[dict.key] = dict.name;
@@ -611,6 +618,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function normalizeWebsites(websites = []) {
+        if (!Array.isArray(websites)) websites = [];
         const normalizedWebsites = [];
         let changed = false;
 
@@ -631,15 +639,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         const value = String(website || '').trim().toLowerCase();
         if (!value) return '';
 
-        if (value.includes('://')) {
-            try {
-                return new URL(value).origin;
-            } catch (error) {
-                return value.split('/')[0];
-            }
+        try {
+            const url = new URL(value.includes('://') ? value : `https://${value}`);
+            return url.host.replace(/\.$/, '');
+        } catch (error) {
+            return value.replace(/^https?:\/\//, '').split('/')[0].replace(/\.$/, '');
         }
-
-        return value.split('/')[0];
     }
 
     function populateWebsiteTable(websites) {

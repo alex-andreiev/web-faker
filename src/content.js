@@ -31,19 +31,20 @@ document.addEventListener('keydown', async function (event) {
     const useWebsites = result.useWebsites === true;
     const currentWebsite = window.location.origin;
 
-    if (!enabled || (useWebsites && !isWebsiteAllowed(currentWebsite, websites))) return;
+    if (!canFillOnCurrentPage({ enabled, useWebsites, websites })) return;
 
     if (useCommandKey && event.code === commandKey) {
         document.addEventListener('keydown', async function (e) {
             if (e.code !== commandKey) {
+                if (!await isFillingAllowed()) return;
                 const key = e.key;
                 const dictionary = mappings[key];
                 if (!dictionary) return;
-                const activeElement = document.activeElement;
+                const activeElement = getEditableElement(document.activeElement);
+                if (!activeElement) return;
                 const replacement = await getRandomItem(dictionary, result, activeElement, key);
-                if (activeElement.tagName.toLowerCase() === 'input' || activeElement.tagName.toLowerCase() === 'textarea') {
-                    activeElement.value = replacement;
-                }
+                if (!await isFillingAllowed()) return;
+                replaceEditableContent(activeElement, replacement);
             }
         }, { once: true });
     }
@@ -51,13 +52,14 @@ document.addEventListener('keydown', async function (event) {
     if (useDoubleKey) {
         const currentTime = new Date().getTime();
         if (lastKey === event.key && (currentTime - lastKeyTime) <= doubleKeyDelayMs) {
+            if (!await isFillingAllowed()) return;
             const dictionary = mappings[event.key];
             if (!dictionary) return;
-            const activeElement = document.activeElement;
+            const activeElement = getEditableElement(document.activeElement);
+            if (!activeElement) return;
             const replacement = await getRandomItem(dictionary, result, activeElement, event.key);
-            if (activeElement.tagName.toLowerCase() === 'input' || activeElement.tagName.toLowerCase() === 'textarea') {
-                activeElement.value = replacement;
-            }
+            if (!await isFillingAllowed()) return;
+            replaceEditableContent(activeElement, replacement);
         }
         lastKey = event.key;
         lastKeyTime = currentTime;
@@ -76,19 +78,82 @@ document.addEventListener('input', async function (event) {
     const useWebsites = result.useWebsites === true;
     const currentWebsite = window.location.origin;
 
-    if (!enabled || (useWebsites && !isWebsiteAllowed(currentWebsite, websites))) return;
+    if (!canFillOnCurrentPage({ enabled, useWebsites, websites })) return;
 
-    if (useCommandChar && (event.target.tagName.toLowerCase() === 'input' || event.target.tagName.toLowerCase() === 'textarea')) {
-        const value = event.target.value;
+    const editableElement = getEditableElement(event.target);
+    if (useCommandChar && editableElement) {
+        const value = getEditableValue(editableElement);
         if (value.startsWith(commandChar)) {
             const command = value.substring(commandChar.length);
             const dictionary = mappings[command];
             if (!dictionary) return;
-            const replacement = await getRandomItem(dictionary, result, event.target, command);
-            event.target.value = replacement;
+            const replacement = await getRandomItem(dictionary, result, editableElement, command);
+            if (!await isFillingAllowed()) return;
+            replaceEditableContent(editableElement, replacement);
         }
     }
 });
+
+function canFillOnCurrentPage({ enabled, useWebsites, websites }) {
+    return enabled !== false && (!useWebsites || isWebsiteAllowed(window.location.origin, websites));
+}
+
+async function isFillingAllowed() {
+    const settings = await new Promise((resolve) => {
+        chrome.storage.sync.get(['enabled', 'websites', 'useWebsites'], resolve);
+    });
+
+    return canFillOnCurrentPage(settings);
+}
+
+function getEditableElement(element) {
+    if (!element || element.nodeType !== Node.ELEMENT_NODE) return null;
+
+    if (element.matches('textarea, input')) {
+        const type = (element.getAttribute('type') || 'text').toLowerCase();
+        return ['text', 'search', 'email', 'url', 'tel', 'password', 'number'].includes(type)
+            ? element
+            : null;
+    }
+
+    if (!element.isContentEditable) return null;
+    const editor = element.closest('[contenteditable]');
+    return editor && editor.getAttribute('contenteditable') !== 'false' ? editor : null;
+}
+
+function getEditableValue(element) {
+    return element.matches('textarea, input') ? element.value : element.innerText || '';
+}
+
+function replaceEditableContent(element, replacement) {
+    if (element.matches('textarea, input')) {
+        const prototype = Object.getPrototypeOf(element);
+        const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
+        if (valueSetter) {
+            valueSetter.call(element, replacement);
+        } else {
+            element.value = replacement;
+        }
+        element.dispatchEvent(new Event('input', { bubbles: true, inputType: 'insertText' }));
+        return;
+    }
+
+    element.focus();
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    if (!document.execCommand || !document.execCommand('insertText', false, replacement)) {
+        element.textContent = replacement;
+        element.dispatchEvent(new InputEvent('input', {
+            bubbles: true,
+            inputType: 'insertText',
+            data: replacement
+        }));
+    }
+}
 
 async function getRandomItem(type, options = {}, target = null, mappingKey = null) {
     const { fetchData, fetchWikipediaData, fetchMovieData } = await import(chrome.runtime.getURL('src/data/index.js'));
@@ -117,30 +182,25 @@ async function getRandomItem(type, options = {}, target = null, mappingKey = nul
 
 
 function isWebsiteAllowed(currentWebsite, websites) {
-    const currentOrigin = normalizeWebsite(currentWebsite);
-    const currentHost = window.location.host.toLowerCase();
-    const currentHostname = window.location.hostname.toLowerCase();
-    if (!currentOrigin) return false;
+    const currentHost = normalizeWebsite(currentWebsite);
+    if (!currentHost) return false;
 
-    return websites
+    return (Array.isArray(websites) ? websites : [])
         .map(normalizeWebsite)
         .filter(Boolean)
-        .some(website => website === currentOrigin || website === currentHost || website === currentHostname);
+        .some(website => website === currentHost);
 }
 
 function normalizeWebsite(website) {
     const value = String(website || '').trim().toLowerCase();
     if (!value) return '';
 
-    if (value.includes('://')) {
-        try {
-            return new URL(value).origin;
-        } catch (error) {
-            return value.split('/')[0];
-        }
+    try {
+        const url = new URL(value.includes('://') ? value : `https://${value}`);
+        return url.host.replace(/\.$/, '');
+    } catch (error) {
+        return value.replace(/^https?:\/\//, '').split('/')[0].replace(/\.$/, '');
     }
-
-    return value.split('/')[0];
 }
 
 

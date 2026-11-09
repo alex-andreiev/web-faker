@@ -12,6 +12,9 @@
    },
    "content_scripts": [ {
       "js": [ "src/content.js" ],
+      "all_frames": true,
+      "match_about_blank": true,
+      "match_origin_as_fallback": true,
       "matches": [ "\u003Call_urls>" ]
    } ],
    "description": "Fill text fields with random test data and Lorem Ipsum placeholders using short commands for development and QA.",
@@ -26,7 +29,7 @@
    "name": "Web Faker - Random Text Filler",
    "permissions": [ "storage", "activeTab" ],
    "update_url": "https://clients2.google.com/service/update2/crx",
-   "version": "1.4",
+   "version": "1.5",
    "web_accessible_resources": [ {
       "matches": [ "\u003Call_urls>" ],
       "resources": [ "src/data/index.js", "src/data/dictionaries.js", "src/data/names.js", "src/data/emails.js", "src/data/texts.js", "src/data/descriptions.js", "src/data/wikipedia.js", "src/data/chat_messages.js", "src/data/movies.js" ]

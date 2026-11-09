@@ -1,5 +1,6 @@
 let lastKey = null;
 let lastKeyTime = 0;
+let lastKeyTarget = null;
 let lastMovie = null;
 let lastMovieTarget = null;
 let lastMovieOutputType = null;
@@ -17,108 +18,121 @@ const LOREM_WORDS = [
 ];
 const LOREM_START_WORDS = ['lorem', 'ipsum', 'dolor', 'sit', 'amet'];
 
-document.addEventListener('keydown', async function (event) {
-    const result = await new Promise((resolve) => {
-        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'commandKey', 'useCommandChar', 'useCommandKey', 'useDoubleKey', 'doubleKeyDelayMs', 'websites', 'useWebsites', 'dictionarySettings', 'loremIpsumMappingSettings', 'maxFakerChars', 'lengthMode'], resolve);
-    });
-    const enabled = result.enabled;
-    const mappings = result.mappings || {};
-    const commandKey = result.commandKey || 'AltLeft';
-    const useCommandKey = result.useCommandKey !== false;
-    const useDoubleKey = result.useDoubleKey !== false;
-    const doubleKeyDelayMs = Math.min(1000, Math.max(50, Number(result.doubleKeyDelayMs) || 250));
-    const websites = result.websites || [];
-    const useWebsites = result.useWebsites === true;
-    const currentWebsite = window.location.origin;
-
-    if (!canFillOnCurrentPage({ enabled, useWebsites, websites })) return;
-
-    if (useCommandKey && event.code === commandKey) {
-        document.addEventListener('keydown', async function (e) {
-            if (e.code !== commandKey) {
-                if (!await isFillingAllowed()) return;
-                const key = e.key;
-                const dictionary = mappings[key];
-                if (!dictionary) return;
-                const activeElement = getEditableElement(document.activeElement);
-                if (!activeElement) return;
-                const replacement = await getRandomItem(dictionary, result, activeElement, key);
-                if (!await isFillingAllowed()) return;
-                replaceEditableContent(activeElement, replacement);
-            }
-        }, { once: true });
-    }
-
-    if (useDoubleKey) {
-        const currentTime = new Date().getTime();
-        if (lastKey === event.key && (currentTime - lastKeyTime) <= doubleKeyDelayMs) {
-            if (!await isFillingAllowed()) return;
-            const dictionary = mappings[event.key];
-            if (!dictionary) return;
-            const activeElement = getEditableElement(document.activeElement);
-            if (!activeElement) return;
-            const replacement = await getRandomItem(dictionary, result, activeElement, event.key);
-            if (!await isFillingAllowed()) return;
-            replaceEditableContent(activeElement, replacement);
-        }
-        lastKey = event.key;
-        lastKeyTime = currentTime;
-    }
+// Keep settings available synchronously: key events cannot wait for storage.
+let settings = null;
+let settingsRevision = 0;
+let commandArmed = false;
+const pendingFills = new WeakMap();
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'sync') return;
+    settingsRevision++;
+    settings = settings || {};
+    for (const [key, change] of Object.entries(changes)) settings[key] = change.newValue;
+    commandArmed = false;
+    lastKey = null;
+});
+const initialRevision = settingsRevision;
+chrome.storage.sync.get(null, result => {
+    if (settingsRevision === initialRevision) settings = result;
+    else settings = { ...result, ...settings };
 });
 
-document.addEventListener('input', async function (event) {
-    const result = await new Promise((resolve) => {
-        chrome.storage.sync.get(['enabled', 'mappings', 'commandChar', 'useCommandChar', 'websites', 'useWebsites', 'dictionarySettings', 'loremIpsumMappingSettings', 'maxFakerChars', 'lengthMode'], resolve);
-    });
-    const enabled = result.enabled;
-    const mappings = result.mappings || {};
-    const commandChar = result.commandChar || '/';
-    const useCommandChar = result.useCommandChar !== false;
-    const websites = result.websites || [];
-    const useWebsites = result.useWebsites === true;
-    const currentWebsite = window.location.origin;
-
-    if (!canFillOnCurrentPage({ enabled, useWebsites, websites })) return;
-
-    const editableElement = getEditableElement(event.target);
-    if (useCommandChar && editableElement) {
-        const value = getEditableValue(editableElement);
-        if (value.startsWith(commandChar)) {
-            const command = value.substring(commandChar.length);
-            const dictionary = mappings[command];
-            if (!dictionary) return;
-            const replacement = await getRandomItem(dictionary, result, editableElement, command);
-            if (!await isFillingAllowed()) return;
-            replaceEditableContent(editableElement, replacement);
-        }
-    }
-});
-
-function canFillOnCurrentPage({ enabled, useWebsites, websites }) {
-    return enabled !== false && (!useWebsites || isWebsiteAllowed(window.location.origin, websites));
+function eventEditor(event) {
+    return getEditableElement(event.composedPath()[0]);
 }
 
-async function isFillingAllowed() {
-    const settings = await new Promise((resolve) => {
-        chrome.storage.sync.get(['enabled', 'websites', 'useWebsites'], resolve);
-    });
+document.addEventListener('keydown', event => {
+    if (!settings || event.isComposing || event.repeat) return;
+    if (!canFillOnCurrentPage(settings)) {
+        commandArmed = false;
+        lastKey = null;
+        return;
+    }
+    const editor = eventEditor(event);
+    const commandKey = settings.commandKey || 'AltLeft';
+    if (settings.useCommandKey !== false && event.code === commandKey) {
+        commandArmed = !!editor;
+        return;
+    }
+    const armed = commandArmed;
+    commandArmed = false;
+    if (!editor) {
+        lastKey = null;
+        return;
+    }
+    const dictionary = (settings.mappings || {})[event.key];
+    const now = Date.now();
+    const delay = Math.min(1000, Math.max(50, Number(settings.doubleKeyDelayMs) || 250));
+    const doubleKey = settings.useDoubleKey === true && lastKey === event.key
+        && lastKeyTarget === editor && now - lastKeyTime <= delay;
+    lastKey = event.key;
+    lastKeyTime = now;
+    lastKeyTarget = editor;
+    if (!dictionary || (!armed && !doubleKey)) return;
+    event.preventDefault();
+    lastKey = null;
+    fillEditor(editor, dictionary, event.key);
+}, true);
 
-    return canFillOnCurrentPage(settings);
+document.addEventListener('input', event => {
+    if (!settings || event.isComposing || !canFillOnCurrentPage(settings)
+        || settings.useCommandChar === false) return;
+    const editor = eventEditor(event);
+    if (!editor) return;
+    const value = getEditableValue(editor);
+    const prefix = settings.commandChar || '/';
+    if (!value.startsWith(prefix)) return;
+    const key = value.slice(prefix.length);
+    const dictionary = (settings.mappings || {})[key];
+    if (dictionary) fillEditor(editor, dictionary, key);
+}, true);
+
+async function fillEditor(editor, dictionary, key) {
+    const request = {};
+    pendingFills.set(editor, request);
+    const original = getEditableValue(editor);
+    const revision = settingsRevision;
+    try {
+        const replacement = await getRandomItem(dictionary, settings, editor, key);
+        const latest = await new Promise(resolve =>
+            chrome.storage.sync.get(['enabled', 'websites', 'useWebsites'], resolve));
+        if (pendingFills.get(editor) !== request || revision !== settingsRevision
+            || !editor.isConnected || getEditableValue(editor) !== original
+            || !canFillOnCurrentPage(latest)) return;
+        pendingFills.delete(editor);
+        replaceEditableContent(editor, replacement);
+    } catch (error) {
+        console.warn('Web Faker could not fill this field:', error);
+    }
+}
+
+function pageWebsite() {
+    // The allowlist describes the visited website, including embedded editors.
+    if (window === window.top) return window.location.href;
+    try {
+        return window.top.location.href;
+    } catch {
+        const ancestors = window.location.ancestorOrigins;
+        return ancestors && ancestors.length ? ancestors[ancestors.length - 1] : '';
+    }
+}
+
+function canFillOnCurrentPage({ enabled, useWebsites, websites }) {
+    return enabled !== false && (!useWebsites || isWebsiteAllowed(pageWebsite(), websites));
 }
 
 function getEditableElement(element) {
     if (!element || element.nodeType !== Node.ELEMENT_NODE) return null;
-
     if (element.matches('textarea, input')) {
-        const type = (element.getAttribute('type') || 'text').toLowerCase();
-        return ['text', 'search', 'email', 'url', 'tel', 'password', 'number'].includes(type)
-            ? element
-            : null;
+        if (element.disabled || element.readOnly) return null;
+        if (element.matches('textarea')) return element;
+        return ['text', 'search', 'email', 'url', 'tel', 'password', 'number']
+            .includes(element.type) ? element : null;
     }
-
     if (!element.isContentEditable) return null;
-    const editor = element.closest('[contenteditable]');
-    return editor && editor.getAttribute('contenteditable') !== 'false' ? editor : null;
+    let editor = element;
+    while (editor.parentElement?.isContentEditable) editor = editor.parentElement;
+    return editor;
 }
 
 function getEditableValue(element) {
@@ -126,33 +140,36 @@ function getEditableValue(element) {
 }
 
 function replaceEditableContent(element, replacement) {
+    const doc = element.ownerDocument;
+    const view = doc.defaultView;
     if (element.matches('textarea, input')) {
-        const prototype = Object.getPrototypeOf(element);
-        const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
-        if (valueSetter) {
-            valueSetter.call(element, replacement);
-        } else {
-            element.value = replacement;
-        }
-        element.dispatchEvent(new Event('input', { bubbles: true, inputType: 'insertText' }));
+        const prototype = element.matches('textarea')
+            ? view.HTMLTextAreaElement.prototype : view.HTMLInputElement.prototype;
+        Object.getOwnPropertyDescriptor(prototype, 'value').set.call(element, replacement);
+        element.dispatchEvent(new view.InputEvent('input', {
+            bubbles: true, composed: true, inputType: 'insertText', data: replacement
+        }));
         return;
     }
-
     element.focus();
-    const selection = window.getSelection();
-    const range = document.createRange();
+    const selection = element.getRootNode().getSelection?.() || view.getSelection();
+    const range = doc.createRange();
     range.selectNodeContents(element);
     selection.removeAllRanges();
     selection.addRange(range);
-
-    if (!document.execCommand || !document.execCommand('insertText', false, replacement)) {
-        element.textContent = replacement;
-        element.dispatchEvent(new InputEvent('input', {
-            bubbles: true,
-            inputType: 'insertText',
-            data: replacement
-        }));
+    let notified = false;
+    const onInput = () => { notified = true; };
+    element.addEventListener('input', onInput, { once: true });
+    try {
+        if (!doc.execCommand || !doc.execCommand('insertText', false, replacement)) {
+            element.textContent = replacement;
+        }
+    } finally {
+        element.removeEventListener('input', onInput);
     }
+    if (!notified) element.dispatchEvent(new view.InputEvent('input', {
+        bubbles: true, composed: true, inputType: 'insertText', data: replacement
+    }));
 }
 
 async function getRandomItem(type, options = {}, target = null, mappingKey = null) {

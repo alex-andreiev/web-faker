@@ -1,0 +1,64 @@
+<!doctype html><meta charset="utf-8">
+<textarea id="plain"></textarea><textarea id="controlled"></textarea>
+<div id="rich" contenteditable="true"><div><span id="nested">/l</span></div></div>
+<textarea id="readonly" readonly></textarea>
+<pre id="results"></pre>
+<script>
+const initial = {enabled:true,mappings:{l:'lorem_ipsum'},useDoubleKey:false};
+let change;
+window.chrome = {storage:{sync:{get:(keys, callback)=>callback({...initial})},
+onChanged:{addListener:callback=>change=callback}}};
+</script>
+<script src="../src/content.js"></script>
+<script>
+(async () => {
+const results = [];
+function check(label, pass) { results.push((pass ? 'PASS ' : 'FAIL ') + label); }
+getRandomItem = async () => 'Generated text';
+const plain = document.querySelector('#plain');
+plain.value = '/l';
+plain.dispatchEvent(new InputEvent('input', {bubbles:true}));
+await new Promise(r=>setTimeout(r,10));
+check('textarea command', plain.value === 'Generated text');
+const controlled = document.querySelector('#controlled');
+let tracked;
+Object.defineProperty(controlled,'value',{get(){return 'tracked'},set(){throw Error('own setter called')}});
+controlled.addEventListener('input',e=>tracked=e.data);
+replaceEditableContent(controlled,'Native value');
+check('native textarea setter and InputEvent', tracked === 'Native value'
+ && Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').get.call(controlled)==='Native value');
+check('nested rich editor host', getEditableElement(document.querySelector('#nested'))===document.querySelector('#rich'));
+const rich = document.querySelector('#rich');
+rich.focus();
+rich.dispatchEvent(new InputEvent('input',{bubbles:true}));
+await new Promise(r=>setTimeout(r,10));
+check('rich editor command', rich.innerText === 'Generated text');
+check('readonly ignored', getEditableElement(document.querySelector('#readonly'))===null);
+check('URL normalization', isWebsiteAllowed('https://mail.google.com',['https://MAIL.GOOGLE.COM/inbox']));
+check('unlisted host blocked', !isWebsiteAllowed('https://evil.example',['example']));
+check('empty allowlist blocks', !canFillOnCurrentPage({useWebsites:true,websites:[]}));
+change({useWebsites:{newValue:true},websites:{newValue:[]}},'sync');
+plain.value='/l';
+plain.dispatchEvent(new InputEvent('input',{bubbles:true}));
+await new Promise(r=>setTimeout(r,10));
+check('live allowlist update blocks insertion', plain.value==='/l');
+change({useWebsites:{newValue:false}},'sync');
+getRandomItem = async () => 'Keyboard result';
+plain.value='';
+plain.addEventListener('keydown', e=>e.stopPropagation());
+plain.dispatchEvent(new KeyboardEvent('keydown',{bubbles:true,code:'AltLeft',key:'Alt'}));
+const shortcut = new KeyboardEvent('keydown',{bubbles:true,cancelable:true,code:'KeyL',key:'l'});
+plain.dispatchEvent(shortcut);
+await new Promise(r=>setTimeout(r,10));
+check('immediate shortcut survives propagation stop', plain.value==='Keyboard result' && shortcut.defaultPrevented);
+let resolve;
+getRandomItem = () => new Promise(r=>resolve=r);
+plain.value='/l';
+plain.dispatchEvent(new InputEvent('input',{bubbles:true}));
+plain.value='user continued typing';
+resolve('Late result');
+await new Promise(r=>setTimeout(r,10));
+check('late result preserves user edits', plain.value==='user continued typing');
+document.querySelector('#results').textContent=results.join('\n');
+})();
+</script>
